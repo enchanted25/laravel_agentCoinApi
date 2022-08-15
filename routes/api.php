@@ -1,10 +1,8 @@
 <?php
 
-use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CoinController;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,13 +16,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::get('/coins', function () {
-//     return Coin::all();
-// });
-
-// Route::resource('coins', CoinController::class);
-
-
 //public routes user
 Route::get('/users', function () {
     return User::all();
@@ -33,8 +24,6 @@ Route::get('/users', function () {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-// Route::put('/update/{id}', [AuthController::class, 'update']);
-
 
 
 // public routes coin
@@ -42,17 +31,12 @@ Route::get('/coins', [CoinController::class, 'index']);
 Route::get('/coins/{id}', [CoinController::class, 'show']);
 
 
-
-
-
-
-//protected routes user
+//protected routes
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     //routes coin
     Route::get('coins', [CoinController::class, 'index']);
     Route::post('coins', [CoinController::class, 'store']);
-    // Route::put('/coins/{id}', [CoinController::class, 'update']);
     Route::delete('/coins/{id}', [CoinController::class, 'destroy']);
 
 

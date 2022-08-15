@@ -5,15 +5,12 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Coin;
-use App\Http\Controllers\AuthController;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Builder;
+use App\Rules\allowedSender;
 
-use function PHPUnit\Framework\returnSelf;
+
 
 class CoinController extends Controller
 {
@@ -36,12 +33,12 @@ class CoinController extends Controller
 
     public function store(Request $request)
     {
+        //tinggal rule receiver dan lainnya
         $fields = $request->validate([
-            'sender' => 'required|String',
-            'receiver' => 'required|String',
+            'sender' => new allowedSender,
+            'receiver' => 'required|string',
             'balance' => 'required|integer'
         ]);
-
 
         //get authenticated user
         $userId = request()->user()->id;
@@ -51,20 +48,11 @@ class CoinController extends Controller
 
         //get from input
         $inputBalance = $request->input('balance');
-        $inputSender = $request->input('sender');
         $inputReceiver = $request->input('receiver');
 
-        // testing
-        //============================
+        $agentFalseCondition = $userId == 2 && $inputReceiver == "masteragent";
 
-        // $test = DB::table('users')->where('id', 2)->increment('balance', $inputBalance);
-        // dd($test);
-
-        //================
-
-        $agentFalseCondition = $userId == 2 && $inputReceiver == $inputSender;
-
-        $agentFalseCondition2 = $userId == 2 && $inputReceiver == ($inputSender = "masteragent");
+        $agentFalseCondition2 = $userId == 2 && $inputReceiver == "agent";
 
         // rules for user topup
         if (!$userId) {
@@ -73,7 +61,7 @@ class CoinController extends Controller
             ], 401);
         } elseif ($agentFalseCondition || $agentFalseCondition2) {
             return response([
-                'message' => 'you are not allowed to do that!'
+                'message' => 'Not allowed!'
             ], 401);
         } elseif ($userId == 2 && (float)$inputBalance > (float)$userBalance) {
             return response([
@@ -87,17 +75,24 @@ class CoinController extends Controller
             'balance' => $fields['balance']
         ]);
 
-        //update user balance
-        if ($userId == 1 && ($inputSender == 'masteragent' && $inputReceiver == 'agent')) {
-            // $test = DB::table('users')->where('id', 2)->increment('balance', $inputBalance);
-            //kenapa gak perlu increment agent udah otomatis menambah balance agent?
+        //update user balance after topup
+        if ($userId == 1 && $inputReceiver == 'agent') { // masteragent topup to agent
 
+            DB::table('users')->where('role', $userRole)->decrement('balance', $inputBalance);
+
+            $agentRole = User::where('role', 'agent')->first();
+            $agentRole->increment('balance', $inputBalance);
+
+            return response([
+                'message' => "Topup Success",
+            ], 200);
+        } elseif ($userId == 1 && $inputReceiver !== ("masteragent" || "agent")) { //masteragent topup to customer
             DB::table('users')->where('role', $userRole)->decrement('balance', $inputBalance);
 
             return response([
                 'message' => "Topup Success",
             ], 200);
-        } elseif ($inputSender == 'masteragent' && $inputReceiver == 'masteragent') {
+        } elseif ($userId == 1 && $inputReceiver == 'masteragent') {
 
             DB::table('users')->where('role', $userRole)
                 ->increment(
@@ -108,7 +103,7 @@ class CoinController extends Controller
             return response([
                 'message' => "Balance updated",
             ], 200);
-        } elseif ($userId == 2) {
+        } elseif ($userId == 2) { //agent topup to customer
 
             DB::table('users')->where('role', $userRole)
                 ->decrement(
@@ -122,12 +117,9 @@ class CoinController extends Controller
         }
     }
 
-
-
-
-    public function show($id)
+    public function show()
     {
-        return Coin::find($id);
+        //code
     }
 
     /**
@@ -137,11 +129,9 @@ class CoinController extends Controller
      * @param  int  $role
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        // $coin = Coin::find($id);
-        // $coin->update($request->all());
-        // return $coin;
+        //code..
     }
 
     /**
@@ -150,8 +140,8 @@ class CoinController extends Controller
      * @param  int  $role
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy()
     {
-        return Coin::destroy($id);
+        //code
     }
 }

@@ -3,12 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Coin;
-use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Request as FacadesRequest;
 
 class AuthController extends Controller
 
